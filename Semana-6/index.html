@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario Interactivo con Validaciones</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-user-plus"></i> Formulario de Registro</h1>
+            <p class="subtitle">Complete todos los campos requeridos para registrarse</p>
+        </header>
+
+        <main>
+            <form id="registrationForm" novalidate>
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-user"></i> Nombre Completo *
+                    </label>
+                    <input type="text" id="name" name="name" placeholder="Ingrese su nombre completo">
+                    <div class="error-message" id="nameError"></div>
+                    <div class="hint">Mínimo 3 caracteres</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Correo Electrónico *
+                    </label>
+                    <input type="email" id="email" name="email" placeholder="ejemplo@correo.com">
+                    <div class="error-message" id="emailError"></div>
+                    <div class="hint">Formato válido: usuario@dominio.com</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> Contraseña *
+                    </label>
+                    <input type="password" id="password" name="password" placeholder="Cree una contraseña segura">
+                    <div class="error-message" id="passwordError"></div>
+                    <div class="hint">Mínimo 8 caracteres, con al menos un número y un carácter especial</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-lock"></i> Confirmar Contraseña *
+                    </label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repita su contraseña">
+                    <div class="error-message" id="confirmPasswordError"></div>
+                    <div class="hint">Debe coincidir con la contraseña ingresada</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">
+                        <i class="fas fa-birthday-cake"></i> Edad *
+                    </label>
+                    <input type="number" id="age" name="age" min="0" max="120" placeholder="Ingrese su edad">
+                    <div class="error-message" id="ageError"></div>
+                    <div class="hint">Debe ser mayor o igual a 18 años</div>
+                </div>
+
+                <div class="form-buttons">
+                    <button type="submit" id="submitBtn" class="btn-submit" disabled>
+                        <i class="fas fa-paper-plane"></i> Enviar Formulario
+                    </button>
+                    <button type="reset" id="resetBtn" class="btn-reset">
+                        <i class="fas fa-redo"></i> Reiniciar Formulario
+                    </button>
+                </div>
+            </form>
+
+            <div class="validation-summary">
+                <h3><i class="fas fa-info-circle"></i> Estado de Validación</h3>
+                <div class="validation-item" id="nameStatus">
+                    <i class="fas fa-times-circle invalid"></i> Nombre: No válido
+                </div>
+                <div class="validation-item" id="emailStatus">
+                    <i class="fas fa-times-circle invalid"></i> Correo: No válido
+                </div>
+                <div class="validation-item" id="passwordStatus">
+                    <i class="fas fa-times-circle invalid"></i> Contraseña: No válida
+                </div>
+                <div class="validation-item" id="confirmPasswordStatus">
+                    <i class="fas fa-times-circle invalid"></i> Confirmación: No válida
+                </div>
+                <div class="validation-item" id="ageStatus">
+                    <i class="fas fa-times-circle invalid"></i> Edad: No válida
+                </div>
+                <div class="validation-footer" id="formStatus">
+                    <i class="fas fa-times-circle"></i> Formulario incompleto
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Desarrollado como ejercicio de formularios interactivos con validaciones dinámicas</p>
+            <p>Todos los campos marcados con * son obligatorios</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
