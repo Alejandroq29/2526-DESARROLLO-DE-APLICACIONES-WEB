@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarea Semana 8 - Bootstrap y JS</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">Tecnología</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="#productos">Productos</a></li>
+                <li class="nav-item"><a class="nav-link" href="#contacto">Contacto</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- CARRUSEL DE IMÁGENES -->
+<div id="miCarrusel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+    <div class="carousel-inner">
+
+        <div class="carousel-item active">
+            <img src="imagen/imagen1.jpg" class="d-block w-100 carousel imagen" alt="Imagen 1">
+            <div class="carousel-caption d-none d-md-block">
+                <h5 class="fw-bold">Bienvenido a Mi Tienda</h5>
+                <p>Descubre los mejores productos tecnológicos del año.</p>
+            </div>
+        </div>
+
+        <div class="carousel-item">
+            <img src="imagen/Imagen3.jpg" class="d-block w-100 carousel imagen" alt="Imagen 2">
+            <div class="carousel-caption d-none d-md-block">
+                <h5 class="fw-bold">Ofertas de Verano</h5>
+                <p>Descuentos de hasta el 50% en accesorios.</p>
+            </div>
+        </div>
+
+        <div class="carousel-item">
+            <img src="imagen/Imagen2.jpg" class="d-block w-100 carousel imagen" alt="Imagen 3">
+            <div class="carousel-caption d-none d-md-block">
+                <h5 class="fw-bold">Envíos Gratis</h5>
+                <p>Recibe tu pedido en menos de 24 horas.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#miCarrusel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+        <span class="visually-hidden">Anterior</span>
+    </button>
+
+    <button class="carousel-control-next" type="button" data-bs-target="#miCarrusel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+        <span class="visually-hidden">Siguiente</span>
+    </button>
+</div>
+
+<!-- PRODUCTOS -->
+<div class="container mt-5">
+    <h2 id="productos" class="text-center mb-4">Lista de Productos</h2>
+
+    <div class="table-responsive mb-5">
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Laptop Gamer</td>
+                    <td>Tecnología</td>
+                    <td>$1200</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Auriculares Bluetooth</td>
+                    <td>Audio</td>
+                    <td>$85</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Teclado Mecánico</td>
+                    <td>Accesorios</td>
+                    <td>$150</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-center mb-5">
+        <button id="btnAlerta" class="btn btn-warning btn-lg">
+            ¡Haz clic para una sorpresa!
+        </button>
+    </div>
+
+    <!-- CONTACTO -->
+    <h2 id="contacto" class="text-center mb-4">Contáctanos</h2>
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <div class="card p-4 shadow">
+                <form id="formularioContacto">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje</label>
+                        <textarea class="form-control" id="mensaje" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Enviar Mensaje
+                    </button>
+
+                    <div id="errorMsg" class="alert alert-danger mt-3 d-none"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-dark text-white text-center py-3">
+    <p class="mb-0">&copy; 2024 Mi Proyecto Bootstrap</p>
+    <small>Síguenos en redes sociales</small>
+    <p>Facebook | Twitter | Instagram</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

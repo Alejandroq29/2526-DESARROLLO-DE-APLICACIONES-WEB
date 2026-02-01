@@ -1,0 +1,26 @@
+
+body {
+    background-color: #f8f9fa; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+.table thead {
+    background-color: #2c3e50; 
+}
+
+
+#btnAlerta {
+    transition: transform 0.2s; 
+    font-weight: bold;
+}
+
+#btnAlerta:hover {
+    transform: scale(1.1); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+
+footer {
+    border-top: 5px solid #0d6efd; 
+}
