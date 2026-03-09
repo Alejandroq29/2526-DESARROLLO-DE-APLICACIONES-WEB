@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MasterLogic</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+<header>
+    <h1>MasterLogic</h1>
+    <nav>
+        <a href="/">Inicio</a>
+        <a href="/productos">Productos</a>
+        <a href="/clientes">Clientes</a>
+        <a href="/inventario">Inventario</a>
+        <a href="/datos">Datos</a>
+        <a href="/about">Acerca</a>
+        <a href="/contacto">Contacto</a>
+    </nav>
+</header>
+
+<main>
+    <hr>
+    {% block contenido %}
+    {% endblock %}
+</main>
+
+<footer>
+    <p>© 2026 MasterLogic</p>
+</footer>
+
+</body>
+</html>

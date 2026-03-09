@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+
+<h2>Productos</h2>
+
+<a href="/producto/nuevo">Agregar Producto</a>
+
+<table border="1">
+
+<tr>
+<th>ID</th>
+<th>Nombre</th>
+<th>Cantidad</th>
+<th>Precio</th>
+</tr>
+
+{% for p in productos %}
+
+<tr>
+<td>{{p.id}}</td>
+<td>{{p.nombre}}</td>
+<td>{{p.cantidad}}</td>
+<td>{{p.precio}}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

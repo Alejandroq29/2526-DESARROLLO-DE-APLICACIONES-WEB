@@ -22,8 +22,9 @@ header h1 {
 
 /* Menú de navegación */
 nav {
-   text-align: center;
-    margin-top: px;
+    background-color: #003366;
+    text-align: center;
+    padding: 10px 0;
 }
 
 nav a {
@@ -32,6 +33,18 @@ nav a {
     margin: 0 15px;
     font-weight: bold;
     transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #ffcc00;
+}
+
+/* Sección principal */
+main {
+    padding: 40px;
+    max-width: 900px;
+    margin: auto;
+    background-color: #f4f6f9;
 }
 
 nav a:hover {
