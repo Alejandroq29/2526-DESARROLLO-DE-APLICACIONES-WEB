@@ -1,0 +1,7 @@
+PC,2,365
+Mouse,3,18
+Pedro,3,18
+Mouse,5,25
+Teclado,3,5.0
+Impresora,1,600.0
+Playstation 5,1,850.0

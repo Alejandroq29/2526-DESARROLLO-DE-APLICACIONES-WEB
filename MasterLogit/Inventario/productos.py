@@ -1,6 +1,7 @@
 from .bd import obtener_conexion
 
 
+
 def obtener_productos():
     conexion = obtener_conexion()
     productos = conexion.execute(
@@ -18,3 +19,32 @@ def agregar_producto(nombre, cantidad, precio):
     )
     conexion.commit()
     conexion.close()
+
+def eliminar_producto(id):
+    conexion = obtener_conexion()
+    conexion.execute(
+        "DELETE FROM productos WHERE id = ?",
+        (id,)
+    )
+    conexion.commit()
+    conexion.close()
+
+def actualizar_producto(id, nombre, cantidad, precio):
+    conexion = obtener_conexion()
+    conexion.execute(
+        "UPDATE productos SET nombre = ?, cantidad = ?, precio = ? WHERE id = ?",
+        (nombre, cantidad, precio, id)
+    )
+    conexion.commit()
+    conexion.close()
+
+class Producto:
+    def __init__(self, producto_id, nombre, cantidad, precio):
+        self.producto_id = producto_id
+        self.nombre = nombre
+        self.cantidad = cantidad
+        self.precio = precio
+
+    def __str__(self):
+        return f"ID: {self.producto_id}, Nombre: {self.nombre}, Cantidad: {self.cantidad}, Precio: {self.precio}"
+

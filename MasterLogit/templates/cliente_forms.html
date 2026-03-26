@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+{% set c = cliente if cliente else {} %}
+<h2>{{ 'Editar Cliente' if cliente else 'Nuevo Cliente' }}</h2>
+<form method="POST">
+    <label>Nombre</label>
+    <input type="text" name="nombre" value="{{ c['nombre'] if c else '' }}" required><br>
+
+    <label>Apellidos</label>
+    <input type="text" name="apellidos" value="{{ c['apellidos'] if c else '' }}"><br>
+
+    <label>Correo</label>
+    <input type="email" name="correo" value="{{ c['correo'] if c else '' }}"><br>
+
+    <label>Teléfono</label>
+    <input type="text" name="telefono" value="{{ c['telefono'] if c else '' }}"><br>
+
+    <label>Dirección</label>
+    <input type="text" name="direccion" value="{{ c['direccion'] if c else '' }}"><br>
+
+    <label>DNI</label>
+    <input type="text" name="dni" value="{{ c['dni'] if c else '' }}"><br>
+
+    <button type="submit">Guardar cambios</button>
+    <a href="{{ url_for('clientes') }}" style="margin-left:12px;">Cancelar</a>
+</form>
+{% endblock %}
