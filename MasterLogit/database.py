@@ -1,224 +1,240 @@
-import sqlite3
+import os
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+import pymysql
+from pymysql.cursors import DictCursor
 
-DATABASE = "masterlogic.db"
+
+# ---------- Configuración MySQL ----------
+
+def _config():
+    db = os.getenv("MYSQL_DB", "servicios")
+    return {
+        "host": os.getenv("MYSQL_HOST", "127.0.0.1"),
+        "port": int(os.getenv("MYSQL_PORT", "3306")),
+        "user": os.getenv("MYSQL_USER", "root"),
+        "password": os.getenv("MYSQL_PASSWORD", ""),
+        "database": db,
+        "charset": "utf8mb4",
+        "cursorclass": DictCursor,
+        "autocommit": False,
+    }
+
+
+class CursorWrapper:
+    """Adapta placeholders estilo SQLite (?) a PyMySQL (%s)."""
+
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def _convert(self, query: str) -> str:
+        return query.replace("?", "%s")
+
+    def execute(self, query, params=None):
+        return self._cursor.execute(self._convert(query), params)
+
+    def executemany(self, query, params):
+        return self._cursor.executemany(self._convert(query), params)
+
+    def fetchone(self):
+        return self._cursor.fetchone()
+
+    def fetchall(self):
+        return self._cursor.fetchall()
+
+    def __getattr__(self, item):
+        return getattr(self._cursor, item)
+
+
+class ConnectionWrapper:
+    """Wrapper ligero para devolver cursores adaptados."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cursor(self):
+        return CursorWrapper(self._conn.cursor())
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        return self._conn.close()
+
+    # Exponer lastrowid si se pide al connection
+    @property
+    def lastrowid(self):
+        return getattr(self._conn, "lastrowid", None)
+
 
 def get_connection():
     """
-    Crea y retorna una conexión a la base de datos SQLite
+    Crea y retorna una conexión a MySQL (phpMyAdmin/XAMPP).
     """
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return ConnectionWrapper(pymysql.connect(**_config()))
+
+
+# ---------- Inicialización de esquema ----------
 
 
 def init_db():
     """
-    Crea las tablas necesarias para el sistema MasterLogic
+    Crea las tablas necesarias para el sistema MasterLogic en MySQL.
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    # Tabla productos
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS productos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL UNIQUE,
-        descripcion TEXT,
-        cantidad INTEGER NOT NULL DEFAULT 0,
-        precio REAL NOT NULL,
-        estado TEXT DEFAULT 'Activo',
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    # Productos
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS productos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL UNIQUE,
+            descripcion TEXT,
+            cantidad INT NOT NULL DEFAULT 0,
+            precio DECIMAL(12,2) NOT NULL,
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            id_cliente INT
+        )
+        """
     )
-    """)
 
-    # Tabla clientes
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS clientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        apellidos TEXT,
-        correo TEXT,
-        telefono TEXT,
-        direccion TEXT,
-        dni TEXT UNIQUE,
-        estado TEXT DEFAULT 'Activo',
-        fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    # Clientes
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS clientes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            apellidos VARCHAR(255),
+            correo VARCHAR(255),
+            telefono VARCHAR(100),
+            direccion VARCHAR(255),
+            dni VARCHAR(100) UNIQUE,
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
     )
-    """)
 
-    # Añadir columnas si no existen (versiones previas)
-    for col_def in [
-        ('apellidos', 'TEXT'),
-        ('direccion', 'TEXT'),
-        ('dni', 'TEXT'),
-    ]:
-        col_name, col_type = col_def
-        try:
-            cursor.execute(f"ALTER TABLE clientes ADD COLUMN {col_name} {col_type}")
-        except sqlite3.OperationalError:
-            pass  # ya existe
-
-
-    # Tabla tecnicos
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS tecnicos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        especialidad TEXT,
-        telefono TEXT,
-        estado TEXT DEFAULT 'Activo',
-        fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    # Técnicos
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tecnicos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            especialidad VARCHAR(255),
+            telefono VARCHAR(100),
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
     )
-    """)
 
-    # Tabla servicios
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS servicios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        descripcion TEXT NOT NULL,
-        costo REAL NOT NULL,
-        id_cliente INTEGER,
-        tecnico TEXT,
-        especialidad TEXT,
-        fecha_solicitud DATE,
-        estado TEXT DEFAULT 'Activo',
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(id_cliente) REFERENCES clientes(id)
+    # Servicios
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS servicios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            descripcion TEXT NOT NULL,
+            costo DECIMAL(12,2) NOT NULL,
+            id_cliente INT,
+            tecnico VARCHAR(255),
+            especialidad VARCHAR(255),
+            fecha_solicitud DATE,
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_cliente) REFERENCES clientes(id)
+        )
+        """
     )
-    """)
 
-    # Añadir columnas extra si existen tablas previas sin ellas
-    try:
-        cursor.execute("ALTER TABLE servicios ADD COLUMN id_cliente INTEGER")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE servicios ADD COLUMN tecnico TEXT")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE servicios ADD COLUMN especialidad TEXT")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE servicios ADD COLUMN fecha_solicitud DATE")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE servicios ADD COLUMN estado TEXT DEFAULT 'Activo'")
-    except sqlite3.OperationalError:
-        pass
-
-    # Tabla repuestos
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS repuestos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        descripcion TEXT,
-        precio REAL NOT NULL,
-        cantidad INTEGER NOT NULL DEFAULT 0,
-        id_cliente INTEGER,
-        estado TEXT DEFAULT 'Activo',
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(id_cliente) REFERENCES clientes(id)
+    # Repuestos
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS repuestos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nombre VARCHAR(255) NOT NULL,
+            descripcion TEXT,
+            precio DECIMAL(12,2) NOT NULL,
+            cantidad INT NOT NULL DEFAULT 0,
+            id_cliente INT,
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_cliente) REFERENCES clientes(id)
+        )
+        """
     )
-    """)
 
-    # Añadir columna id_cliente si no existe (versiones previas)
-    try:
-        cursor.execute("ALTER TABLE repuestos ADD COLUMN id_cliente INTEGER")
-    except sqlite3.OperationalError:
-        pass  # ya existe
-    # Añadir columna cantidad si viene de esquemas antiguos
-    try:
-        cursor.execute("ALTER TABLE repuestos ADD COLUMN cantidad INTEGER NOT NULL DEFAULT 1")
-    except sqlite3.OperationalError:
-        pass  # ya existe
-
-    # Tabla relación servicio - repuesto
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS servicio_repuesto (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_servicio INTEGER NOT NULL,
-        id_repuesto INTEGER NOT NULL,
-        cantidad INTEGER DEFAULT 1,
-        FOREIGN KEY(id_servicio) REFERENCES servicios(id),
-        FOREIGN KEY(id_repuesto) REFERENCES repuestos(id)
+    # Relación servicio-repuesto
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS servicio_repuesto (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_servicio INT NOT NULL,
+            id_repuesto INT NOT NULL,
+            cantidad INT DEFAULT 1,
+            FOREIGN KEY (id_servicio) REFERENCES servicios(id),
+            FOREIGN KEY (id_repuesto) REFERENCES repuestos(id)
+        )
+        """
     )
-    """)
 
-    # Tabla facturas
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS facturas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_cliente INTEGER NOT NULL,
-        numero_factura TEXT UNIQUE,
-        fecha DATE DEFAULT CURRENT_DATE,
-        total REAL NOT NULL,
-        estado TEXT DEFAULT 'Pendiente',
-        FOREIGN KEY(id_cliente) REFERENCES clientes(id)
+    # Facturas
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS facturas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_cliente INT NOT NULL,
+            numero_factura VARCHAR(255) UNIQUE,
+            fecha DATE DEFAULT CURRENT_DATE,
+            total DECIMAL(12,2) NOT NULL,
+            estado VARCHAR(50) DEFAULT 'Pendiente',
+            FOREIGN KEY (id_cliente) REFERENCES clientes(id)
+        )
+        """
     )
-    """)
 
-    # Añadir columna descripcion a bases antiguas
-    try:
-        cursor.execute("ALTER TABLE productos ADD COLUMN descripcion TEXT")
-    except sqlite3.OperationalError:
-        pass
-
-    # Asegurar columna estado en bases antiguas
-    try:
-        cursor.execute("ALTER TABLE facturas ADD COLUMN estado TEXT DEFAULT 'Pendiente'")
-    except sqlite3.OperationalError:
-        pass  # ya existe
-
-    # Tabla detalles de factura
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS factura_detalle (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_factura INTEGER NOT NULL,
-        concepto TEXT NOT NULL,
-        cantidad REAL,
-        precio_unitario REAL,
-        subtotal REAL,
-        FOREIGN KEY(id_factura) REFERENCES facturas(id)
+    # Detalles de factura
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS factura_detalle (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_factura INT NOT NULL,
+            concepto TEXT NOT NULL,
+            cantidad DECIMAL(12,2),
+            precio_unitario DECIMAL(12,2),
+            subtotal DECIMAL(12,2),
+            FOREIGN KEY (id_factura) REFERENCES facturas(id)
+        )
+        """
     )
-    """)
 
-    # Tabla usuarios - NUEVA
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        usuario TEXT NOT NULL UNIQUE,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        nombre TEXT,
-        estado TEXT DEFAULT 'Activo',
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    # Usuarios
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario VARCHAR(255) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            nombre VARCHAR(255),
+            estado VARCHAR(50) DEFAULT 'Activo',
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
     )
-    """)
 
-    # Asegurar relación cliente-producto (columna opcional)
-    try:
-        cursor.execute("ALTER TABLE productos ADD COLUMN id_cliente INTEGER")
-    except sqlite3.OperationalError:
-        pass  # columna ya existe
-
-    # Crear índices para búsqueda rápida
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos(nombre)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre)")
-    
-    # Crear índice de DNI solo si la columna existe
-    try:
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_clientes_dni ON clientes(dni)")
-    except sqlite3.OperationalError:
-        pass  # La columna no existe aún
-    
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_repuestos_nombre ON repuestos(nombre)")
-    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tecnicos_nombre ON tecnicos(nombre)")
+    # Índices útiles
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos(nombre)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_clientes_dni ON clientes(dni)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_repuestos_nombre ON repuestos(nombre)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_tecnicos_nombre ON tecnicos(nombre)")
 
     conn.commit()
     conn.close()
@@ -226,49 +242,46 @@ def init_db():
 
 # ============= FUNCIONES DE BÚSQUEDA =============
 
+
 def buscar_productos(termino):
-    """
-    Busca productos por nombre o descripción
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT * FROM productos 
+    cursor.execute(
+        """
+        SELECT * FROM productos
         WHERE nombre LIKE ? OR descripcion LIKE ?
         ORDER BY nombre
-    """, (f"%{termino}%", f"%{termino}%"))
+        """,
+        (f"%{termino}%", f"%{termino}%"),
+    )
     resultados = cursor.fetchall()
     conn.close()
     return resultados
 
 
 def buscar_clientes(termino):
-    """
-    Busca clientes por nombre, email, teléfono o DNI
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT * FROM clientes 
+    cursor.execute(
+        """
+        SELECT * FROM clientes
         WHERE nombre LIKE ? OR correo LIKE ? OR telefono LIKE ? OR dni LIKE ?
         ORDER BY nombre
-    """, (f"%{termino}%", f"%{termino}%", f"%{termino}%", f"%{termino}%"))
+        """,
+        (f"%{termino}%", f"%{termino}%", f"%{termino}%", f"%{termino}%"),
+    )
     resultados = cursor.fetchall()
     conn.close()
     return resultados
 
 
 def buscar_clientes_exacto(nombre=None, correo=None, dni=None):
-    """
-    Busca clientes con coincidencia exacta en nombre/email/dni.
-    Campos vacíos son ignorados.
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     condiciones = []
     parametros = []
-    
+
     if nombre:
         condiciones.append("nombre LIKE ?")
         parametros.append(f"%{nombre}%")
@@ -278,7 +291,7 @@ def buscar_clientes_exacto(nombre=None, correo=None, dni=None):
     if dni:
         condiciones.append("dni = ?")
         parametros.append(dni)
-    
+
     if not condiciones:
         return []
 
@@ -290,170 +303,143 @@ def buscar_clientes_exacto(nombre=None, correo=None, dni=None):
 
 
 def buscar_repuestos(termino):
-    """
-    Busca repuestos por nombre o descripción
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT * FROM repuestos 
+    cursor.execute(
+        """
+        SELECT * FROM repuestos
         WHERE nombre LIKE ? OR descripcion LIKE ?
         ORDER BY nombre
-    """, (f"%{termino}%", f"%{termino}%"))
+        """,
+        (f"%{termino}%", f"%{termino}%"),
+    )
     resultados = cursor.fetchall()
     conn.close()
     return resultados
 
 
 def buscar_tecnicos(termino):
-    """
-    Busca técnicos por nombre o especialidad
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT * FROM tecnicos 
+    cursor.execute(
+        """
+        SELECT * FROM tecnicos
         WHERE nombre LIKE ? OR especialidad LIKE ?
         ORDER BY nombre
-    """, (f"%{termino}%", f"%{termino}%"))
+        """,
+        (f"%{termino}%", f"%{termino}%"),
+    )
     resultados = cursor.fetchall()
     conn.close()
     return resultados
 
 
 def buscar_global(termino):
-    """
-    Realiza una búsqueda global en todas las tablas principales
-    """
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     resultados = {
-        'productos': [],
-        'clientes': [],
-        'repuestos': [],
-        'tecnicos': [],
-        'servicios': []
+        "productos": [],
+        "clientes": [],
+        "repuestos": [],
+        "tecnicos": [],
+        "servicios": [],
     }
-    
+
     if termino.strip():
         busqueda = f"%{termino}%"
-        
-        # Buscar en productos
-        cursor.execute("""
-            SELECT 'producto' as tipo, id, nombre, null as correo, null as precio_unitario, 
-                   precio, cantidad, null as especialidad FROM productos 
+
+        cursor.execute(
+            """
+            SELECT 'producto' as tipo, id, nombre, null as correo, null as precio_unitario,
+                   precio, cantidad, null as especialidad FROM productos
             WHERE nombre LIKE ? OR descripcion LIKE ?
-        """, (busqueda, busqueda))
-        resultados['productos'] = cursor.fetchall()
-        
-        # Buscar en clientes
-        cursor.execute("""
+            """,
+            (busqueda, busqueda),
+        )
+        resultados["productos"] = cursor.fetchall()
+
+        cursor.execute(
+            """
             SELECT 'cliente' as tipo, id, nombre, correo, telefono as precio_unitario,
-                   null as precio, null as cantidad, null as especialidad FROM clientes 
+                   null as precio, null as cantidad, null as especialidad FROM clientes
             WHERE nombre LIKE ? OR correo LIKE ? OR telefono LIKE ? OR dni LIKE ?
-        """, (busqueda, busqueda, busqueda, busqueda))
-        resultados['clientes'] = cursor.fetchall()
-        
-        # Buscar en repuestos
-        cursor.execute("""
+            """,
+            (busqueda, busqueda, busqueda, busqueda),
+        )
+        resultados["clientes"] = cursor.fetchall()
+
+        cursor.execute(
+            """
             SELECT 'repuesto' as tipo, id, nombre, null as correo, null as precio_unitario,
-                   precio, cantidad, null as especialidad FROM repuestos 
+                   precio, cantidad, null as especialidad FROM repuestos
             WHERE nombre LIKE ? OR descripcion LIKE ?
-        """, (busqueda, busqueda))
-        resultados['repuestos'] = cursor.fetchall()
-        
-        # Buscar en técnicos
-        cursor.execute("""
+            """,
+            (busqueda, busqueda),
+        )
+        resultados["repuestos"] = cursor.fetchall()
+
+        cursor.execute(
+            """
             SELECT 'tecnico' as tipo, id, nombre, null as correo, null as precio_unitario,
-                   null as precio, null as cantidad, especialidad FROM tecnicos 
+                   null as precio, null as cantidad, especialidad FROM tecnicos
             WHERE nombre LIKE ? OR especialidad LIKE ?
-        """, (busqueda, busqueda))
-        resultados['tecnicos'] = cursor.fetchall()
-        
-        # Buscar en servicios
-        cursor.execute("""
+            """,
+            (busqueda, busqueda),
+        )
+        resultados["tecnicos"] = cursor.fetchall()
+
+        cursor.execute(
+            """
             SELECT 'servicio' as tipo, id, descripcion as nombre, null as correo, null as precio_unitario,
-                   costo as precio, null as cantidad, null as especialidad FROM servicios 
+                   costo as precio, null as cantidad, null as especialidad FROM servicios
             WHERE descripcion LIKE ?
-        """, (busqueda,))
-        resultados['servicios'] = cursor.fetchall()
-    
+            """,
+            (busqueda,),
+        )
+        resultados["servicios"] = cursor.fetchall()
+
     conn.close()
     return resultados
 
 
 # ============= FUNCIONES DE AUTENTICACIÓN =============
 
+
 def crear_usuario(usuario, email, password, nombre=None):
-    """
-    Crea un nuevo usuario con contraseña cifrada
-    """
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
-        # Hashear la contraseña
+
         password_hash = generate_password_hash(password)
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             INSERT INTO usuarios(usuario, email, password, nombre)
             VALUES (?, ?, ?, ?)
-        """, (usuario, email, password_hash, nombre))
-        
+            """,
+            (usuario, email, password_hash, nombre),
+        )
         conn.commit()
-        conn.close()
         return True
-    except sqlite3.IntegrityError:
-        return False  # Usuario o email ya existe
+    except Exception:
+        conn.rollback()
+        return False
+    finally:
+        conn.close()
 
 
 def verificar_usuario(usuario_email, password):
-    """
-    Verifica las credenciales del usuario (usuario o email + contraseña)
-    """
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        # Buscar por usuario o email
-        cursor.execute("""
-            SELECT id, usuario, email, password, nombre FROM usuarios 
-            WHERE usuario = ? OR email = ?
-        """, (usuario_email, usuario_email))
-        
-        usuario = cursor.fetchone()
-        conn.close()
-        
-        if usuario and check_password_hash(usuario['password'], password):
-            return {
-                'id': usuario['id'],
-                'usuario': usuario['usuario'],
-                'email': usuario['email'],
-                'nombre': usuario['nombre']
-            }
-        return None
-    except Exception as e:
-        print(f"Error al verificar usuario: {e}")
-        return None
+    conn = get_connection()
+    cursor = conn.cursor()
 
+    cursor.execute(
+        "SELECT * FROM usuarios WHERE usuario = ? OR email = ?",
+        (usuario_email, usuario_email),
+    )
+    user = cursor.fetchone()
+    conn.close()
 
-def obtener_usuario(usuario_id):
-    """
-    Obtiene la información del usuario por ID
-    """
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, usuario, email, nombre FROM usuarios 
-            WHERE id = ?
-        """, (usuario_id,))
-        
-        usuario = cursor.fetchone()
-        conn.close()
-        return usuario
-    except Exception as e:
-        print(f"Error al obtener usuario: {e}")
-        return None
+    if user and check_password_hash(user["password"], password):
+        return user
+    return None

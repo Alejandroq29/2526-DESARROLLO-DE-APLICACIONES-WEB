@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block contenido %}
 <style>
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
@@ -27,10 +28,10 @@
         </div>
         <div class="field">
             <label for="id_cliente">Cliente</label>
-            <select id="id_cliente" name="id_cliente" required>
+            <select id="id_cliente" name="id_cliente">
                 <option value="">-- Seleccione Cliente --</option>
                 {% for c in clientes %}
-                <option value="{{ c.id }}">{{ c.nombre }} {{ c.apellidos or '' }} ({{ c.dni or '-' }})</option>
+                <option value="{{ c.id }}">{{ c.nombre }} {{ c.apellidos or '' }} {% if c.dni %}({{ c.dni }}){% endif %}</option>
                 {% endfor %}
             </select>
         </div>
@@ -48,8 +49,10 @@
         <div class="field">
             <label for="tecnico">Técnico</label>
             <select id="tecnico" name="tecnico" required>
-                <option value="Pedro Sánchez">Pedro Sánchez</option>
-                <option value="Laura Díaz">Laura Díaz</option>
+                <option value="">-- Seleccione técnico --</option>
+                {% for t in tecnicos %}
+                <option value="{{ t }}">{{ t }}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="field">
@@ -67,9 +70,12 @@
 
     <h3 style="margin-top:18px;">Servicios registrados</h3>
     <table class="table-grid" aria-label="Tabla de servicios">
+        <thead>
         <tr>
-            <th>ID</th><th>Descripción</th><th>Costo</th><th>Cliente</th><th>DNI</th><th>Correo</th><th>Dirección</th><th>Técnico</th><th>Especialidad</th><th>Fecha Solicitud</th><th>Estado</th>
+            <th>ID</th><th>Descripción</th><th>Costo</th><th>Cliente</th><th>DNI</th><th>Correo</th><th>Dirección</th><th>Técnico(s)</th><th>Especialidad</th><th>Fecha Solicitud</th><th>Estado</th>
         </tr>
+        </thead>
+        <tbody>
         {% for s in servicios %}
         <tr>
             <td>{{ s.id }}</td>
@@ -85,6 +91,7 @@
             <td>{{ s.estado or '-' }}</td>
         </tr>
         {% endfor %}
+        </tbody>
     </table>
 </div>
 {% endblock %}

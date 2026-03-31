@@ -33,5 +33,20 @@
         "nombre": "Playstation 5",
         "cantidad": 1,
         "precio": 850.0
+    },
+    {
+        "nombre": "Laptop",
+        "cantidad": 6,
+        "precio": 500.0
+    },
+    {
+        "nombre": "Telefono",
+        "cantidad": 6,
+        "precio": 150.0
+    },
+    {
+        "nombre": "Camara",
+        "cantidad": 3,
+        "precio": 60.0
     }
 ]

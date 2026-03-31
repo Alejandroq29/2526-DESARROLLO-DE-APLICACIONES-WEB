@@ -12,19 +12,27 @@
 </style>
 
 <div class="card-surface" aria-label="Historial del cliente">
+    <div style="text-align:center;margin-bottom:10px;">
+        <div style="display:inline-block;padding:8px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+            <span style="font-size:20px;font-weight:800;color:var(--accent);letter-spacing:0.4px;">MasterLogic</span>
+        </div>
+    </div>
     <div class="flex-between">
         <div>
             <h2 class="section-title">Historial de {{ cliente['nombre'] }} {{ cliente.get('apellidos','') }}</h2>
             <p class="muted">Resumen de compras, repuestos y servicios en MasterLogic.</p>
         </div>
-        <button class="print-btn no-print" onclick="window.print()">🖨 Imprimir</button>
+        <div class="no-print" style="display:flex;gap:8px;align-items:center;">
+            <button class="print-btn" onclick="window.print()">Imprimir</button>
+            <a class="print-btn" href="{{ url_for('cliente_historial_pdf', cliente_id=cliente['id']) }}" class="btn btn-danger">Descargar PDF</a>
+        </div>
     </div>
 
     <div class="info-grid">
         {% if cliente.get('dni') %}<div class="info-card"><span class="stat-label">DNI</span><div class="stat-value">{{ cliente['dni'] }}</div></div>{% endif %}
         {% if cliente.get('correo') %}<div class="info-card"><span class="stat-label">Correo</span><div class="stat-value">{{ cliente['correo'] }}</div></div>{% endif %}
-        {% if cliente.get('telefono') %}<div class="info-card"><span class="stat-label">TelÃ©fono</span><div class="stat-value">{{ cliente['telefono'] }}</div></div>{% endif %}
-        {% if cliente.get('direccion') %}<div class="info-card"><span class="stat-label">DirecciÃ³n</span><div class="stat-value">{{ cliente['direccion'] }}</div></div>{% endif %}
+        {% if cliente.get('telefono') %}<div class="info-card"><span class="stat-label">Telefono</span><div class="stat-value">{{ cliente['telefono'] }}</div></div>{% endif %}
+        {% if cliente.get('direccion') %}<div class="info-card"><span class="stat-label">Direccion</span><div class="stat-value">{{ cliente['direccion'] }}</div></div>{% endif %}
     </div>
 
     <div class="stat-grid">

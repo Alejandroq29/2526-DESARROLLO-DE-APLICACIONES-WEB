@@ -21,7 +21,9 @@
         <select id="id_cliente" name="id_cliente" style="width:100%; padding:8px;">
             <option value="">- Ninguno -</option>
             {% for c in clientes %}
-            <option value="{{ c.id }}" {% if p and p.get('id_cliente') == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+            <option value="{{ c.id }}" {% if p and p.get('id_cliente') == c.id %}selected{% endif %}>
+                {{ c.nombre }}{% if c.apellidos %} {{ c.apellidos }}{% endif %} {% if c.dni %}({{ c.dni }}){% endif %}
+            </option>
             {% endfor %}
         </select>
     </div>

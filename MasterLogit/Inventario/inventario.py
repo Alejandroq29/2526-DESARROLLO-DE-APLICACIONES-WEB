@@ -1,8 +1,4 @@
-import sqlite3
-
-def obtener_conexion():
-    return sqlite3.connect("masterlogic.db")
-from conexion.conexion import obtener_conexion
+from database import get_connection as obtener_conexion
 from productos import obtener_productos, agregar_producto, eliminar_producto, actualizar_producto, Producto
 
 class Inventario:

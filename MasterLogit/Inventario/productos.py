@@ -1,39 +1,47 @@
 from .bd import obtener_conexion
 
 
-
 def obtener_productos():
+    """
+    Devuelve todos los productos usando MySQL.
+    Usa cursor() porque el wrapper de conexión no expone execute directo.
+    """
     conexion = obtener_conexion()
-    productos = conexion.execute(
-        "SELECT * FROM productos"
-    ).fetchall()
+    cur = conexion.cursor()
+    cur.execute("SELECT * FROM productos")
+    productos = cur.fetchall()
     conexion.close()
     return productos
 
 
 def agregar_producto(nombre, cantidad, precio):
     conexion = obtener_conexion()
-    conexion.execute(
+    cur = conexion.cursor()
+    cur.execute(
         "INSERT INTO productos (nombre, cantidad, precio) VALUES (?, ?, ?)",
-        (nombre, cantidad, precio)
+        (nombre, cantidad, precio),
     )
     conexion.commit()
     conexion.close()
+
 
 def eliminar_producto(id):
     conexion = obtener_conexion()
-    conexion.execute(
+    cur = conexion.cursor()
+    cur.execute(
         "DELETE FROM productos WHERE id = ?",
-        (id,)
+        (id,),
     )
     conexion.commit()
     conexion.close()
 
+
 def actualizar_producto(id, nombre, cantidad, precio):
     conexion = obtener_conexion()
-    conexion.execute(
+    cur = conexion.cursor()
+    cur.execute(
         "UPDATE productos SET nombre = ?, cantidad = ?, precio = ? WHERE id = ?",
-        (nombre, cantidad, precio, id)
+        (nombre, cantidad, precio, id),
     )
     conexion.commit()
     conexion.close()
