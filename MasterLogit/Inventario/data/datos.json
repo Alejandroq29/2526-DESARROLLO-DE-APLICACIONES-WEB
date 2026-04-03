@@ -48,5 +48,15 @@
         "nombre": "Camara",
         "cantidad": 3,
         "precio": 60.0
+    },
+    {
+        "nombre": "Celular",
+        "cantidad": 2,
+        "precio": 90.0
+    },
+    {
+        "nombre": "teclado25",
+        "cantidad": 10,
+        "precio": 6.0
     }
 ]
